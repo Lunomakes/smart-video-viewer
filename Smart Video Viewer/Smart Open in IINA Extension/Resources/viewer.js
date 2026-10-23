@@ -46,11 +46,18 @@
         });
       }
     }
-    if (parent && parentHeight) set(parent, { 'min-height': `${parentHeight}px` });
+    // Out-of-flow videos already have a site-owned aspect-ratio placeholder.
+    // Adding a minimum height can double-count its padding-based height.
+    const videoPosition = getComputedStyle(element).position;
+    if (parent && parentHeight && !['absolute', 'fixed'].includes(videoPosition)) set(parent, { 'min-height': `${parentHeight}px` });
     let child = element;
     for (let ancestor = parentElement(child); ancestor; child = ancestor, ancestor = parentElement(child)) {
-      // Remove containing blocks and stacking contexts without moving the video.
-      set(ancestor, { position: 'static', transform: 'none', translate: 'none', rotate: 'none', scale: 'none', filter: 'none',
+      // Relative/absolute positioning does not contain a fixed video. Preserve it:
+      // making X's absolute player layers static inflates the feed's measured rows.
+      // Fixed/sticky ancestors still need their unconditional stacking context removed.
+      const position = getComputedStyle(ancestor).position;
+      set(ancestor, { ...(['fixed', 'sticky'].includes(position) ? { position: 'static' } : {}),
+        transform: 'none', translate: 'none', rotate: 'none', scale: 'none', filter: 'none',
         'backdrop-filter': 'none', perspective: 'none', contain: 'none', 'content-visibility': 'visible',
         'will-change': 'auto', overflow: 'visible', 'clip-path': 'none', clip: 'auto', opacity: '1',
         isolation: 'auto', 'z-index': 'auto', 'pointer-events': 'none' });
@@ -111,6 +118,7 @@
     if (session) close();
     const video = allVideos().find(v => ids.get(v) === id);
     if (!video?.isConnected) return { ok: false, error: '视频已经变化，请重新检测。' };
+    const wasPlaying = !video.paused && !video.ended;
     preparedToken = token;
     const opening = ++generation;
     let stored = {};
@@ -247,7 +255,18 @@
       try { video.currentTime = clamp(time, range[0], range[1]); update(); return true; } catch { status('当前视频不允许跳转到此位置。'); return false; }
     }
     const seekBy = delta => { if (seekTo(video.currentTime + delta)) status(`${delta < 0 ? '快退' : '快进'} ${Math.abs(delta)} 秒`); };
-    const toggle = () => { if (video.paused) video.play().catch(() => status('播放被网页阻止，请直接点击视频后重试。')); else video.pause(); };
+    // Sites may pause media when the viewer changes its observed visibility.
+    // Recover once during entry only; never fight a user's pause or a later site pause.
+    let entryRecovery = wasPlaying;
+    const entryDeadline = performance.now() + 1000;
+    const recoverEntryPlayback = () => {
+      if (!entryRecovery || session !== s || performance.now() > entryDeadline ||
+          document.hidden || video.ended || !video.paused) return;
+      entryRecovery = false;
+      video.play().catch(() => { if (session === s) status('网页阻止了继续播放，请点击播放。'); });
+    };
+    on(video, 'pause', recoverEntryPlayback);
+    const toggle = () => { entryRecovery = false; if (video.paused) video.play().catch(() => status('播放被网页阻止，请直接点击视频后重试。')); else video.pause(); };
     function update() {
       $('play').textContent = video.paused ? '▶' : '❚❚'; $('play').setAttribute('aria-label', video.paused ? '播放' : '暂停');
       $('mute').textContent = video.muted ? '静音' : '声音'; $('mute').setAttribute('aria-label', video.muted ? '取消静音' : '静音');
@@ -266,8 +285,33 @@
         else status('当前浏览器不支持此视频全屏。');
       } catch { status('全屏不可用，请先播放视频。'); }
     }
-    on(backdrop, 'click', event => { event.preventDefault(); event.stopImmediatePropagation(); close(); }, { capture: true });
-    on($('play'), 'click', toggle); on(video, 'click', e => { e.preventDefault(); e.stopImmediatePropagation(); toggle(); }, { capture: true });
+    // Capture before the site's player handlers. An overlay may cover the backdrop,
+    // so decide by picture bounds rather than requiring the backdrop to be the target.
+    const nativePresentation = () => document.fullscreenElement || video.webkitDisplayingFullscreen ||
+      document.pictureInPictureElement === video || video.webkitPresentationMode === 'picture-in-picture';
+    for (const type of ['pointerdown', 'mousedown', 'touchstart']) on(window, type, event => {
+      entryRecovery = false;
+      if (!nativePresentation() && !event.composedPath().includes(host)) event.stopImmediatePropagation();
+    }, { capture: true });
+    on(window, 'keydown', () => { entryRecovery = false; }, { capture: true });
+    on(window, 'click', event => {
+      if (nativePresentation()) return;
+      const path = event.composedPath();
+      if (path.includes(panel)) return;
+      const rect = video.getBoundingClientRect();
+      // X can resize the element after layout(). Its box then includes letterboxing;
+      // hit-test the contained picture, not that potentially viewport-sized box.
+      const ratio = video.videoWidth > 0 && video.videoHeight > 0 ? video.videoWidth / video.videoHeight : fallbackRatio;
+      const pictureWidth = Math.min(rect.width, rect.height * ratio);
+      const pictureHeight = pictureWidth / ratio;
+      const left = rect.left + (rect.width - pictureWidth) / 2;
+      const top = rect.top + (rect.height - pictureHeight) / 2;
+      const inside = path.includes(video) && event.clientX >= left && event.clientX < left + pictureWidth &&
+        event.clientY >= top && event.clientY < top + pictureHeight;
+      event.preventDefault(); event.stopImmediatePropagation();
+      if (inside) toggle(); else close();
+    }, { capture: true });
+    on($('play'), 'click', toggle);
     on($('back'), 'click', () => seekBy(-settings.seekSeconds)); on($('forward'), 'click', () => seekBy(settings.seekSeconds));
     on($('mute'), 'click', () => { video.muted = !video.muted; update(); });
     on($('volume'), 'input', () => { video.volume = Number($('volume').value); video.muted = video.volume === 0; });
@@ -322,11 +366,13 @@
     s.timer = setInterval(() => { if (!video.isConnected) close(); }, 1000);
     video.controls = false; $('seek').value = settings.seekSeconds;
     layout(); update(); setRate(settings.rate); relay(true);
+    recoverEntryPlayback();
     host.tabIndex = -1; host.focus({ preventScroll: true });
     return { ok: true };
   }
   window.addEventListener('pagehide', () => { close(); restoreFrame(); preparedToken = null; });
   globalThis.smartVideoViewer = { inventory, open, close, cleanSettings, deepQuery,
+    openVideo(video) { inventory(); return open(ids.get(video)); },
     prepare(token) { if (token !== preparedToken) { close(); restoreFrame(); } preparedToken = token; },
     active: () => Boolean(session) };
 })();

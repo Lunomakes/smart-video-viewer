@@ -1,0 +1,55 @@
+async (page) => {
+  const results=[];
+  const check=(name,ok)=>{if(!ok)throw Error(name);results.push(name);};
+  // Serve synthetic fixtures under an X origin; no account or real feed is used.
+  await page.route('https://x.com/**',async route=>{
+    const response=await page.request.get('http://127.0.0.1:8766'+new URL(route.request().url()).pathname);
+    await route.fulfill({response});
+  });
+  await page.setViewportSize({width:1280,height:900});
+  await page.goto('https://x.com/Smart%20Video%20Viewer/tests/x-video-fixture.html');
+  await page.waitForFunction(()=>document.querySelector('[data-smart-x-video]')?.shadowRoot.querySelectorAll('button').length===2);
+  const buttons=page.getByRole('button',{name:'进入独立观影'});
+  check('one button per video',await buttons.count()===2);
+  check('hidden until hover or keyboard focus',await buttons.first().evaluate(el=>getComputedStyle(el).opacity==='0'));
+  await page.locator('video').nth(1).hover();
+  await page.waitForFunction(()=>document.querySelector('[data-smart-x-video]').shadowRoot.querySelectorAll('button')[1].hasAttribute('data-hover'));
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-smart-x-video]').shadowRoot.querySelectorAll('button')[1]).opacity==='1');
+  await page.screenshot({path:'output/playwright/x-quick-entry.png'});
+  await page.evaluate(()=>{window.selected=document.querySelectorAll('video')[1];window.originalStyle=selected.getAttribute('style');window.beforeTime=selected.currentTime;window.originalStream=selected.srcObject;});
+  await page.locator('video').nth(1).hover();
+  await buttons.nth(1).click();
+  await page.waitForFunction(()=>smartVideoViewer.active());
+  check('opens clicked video and keeps original stream/time',await page.evaluate(()=>selected.style.position==='fixed'&&document.querySelector('video').style.position!== 'fixed'&&selected.srcObject===originalStream&&selected.currentTime>=beforeTime));
+  check('entry does not trigger site click',await page.evaluate(()=>siteClicks===0));
+  check('entry buttons hidden during viewing',await buttons.count()===0);
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(()=>!smartVideoViewer.active());
+  check('Escape restores layout',await page.evaluate(()=>!selected.style.position&&selected.srcObject===originalStream));
+  await buttons.nth(1).focus();
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(()=>smartVideoViewer.active());
+  check('keyboard opens same video',await page.evaluate(()=>selected.style.position==='fixed'));
+  await page.mouse.click(3,3);
+  await page.waitForFunction(()=>!smartVideoViewer.active());
+  check('backdrop exits viewer',true);
+  await page.evaluate(()=>document.querySelector('article').remove());
+  await page.waitForFunction(()=>document.querySelector('[data-smart-x-video]').shadowRoot.querySelectorAll('button').length===1);
+  check('removed videos release buttons',true);
+  await page.evaluate(()=>{const old=document.querySelector('video');const next=old.cloneNode();old.replaceWith(next);window.replacement=next;});
+  await page.waitForFunction(()=>document.querySelector('[data-smart-x-video]').shadowRoot.querySelectorAll('button').length===1);
+  await page.locator('video').hover();await buttons.first().click();
+  await page.waitForFunction(()=>smartVideoViewer.active());
+  check('replacement node is targeted',await page.evaluate(()=>replacement.style.position==='fixed'));
+  await page.evaluate(()=>replacement.remove());
+  await page.waitForFunction(()=>!smartVideoViewer.active());
+  check('removed active video exits safely',true);
+  await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pagehide')));
+  check('pagehide removes overlay',await page.locator('[data-smart-x-video]').count()===0);
+  await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
+  check('bfcache restore creates one overlay',await page.locator('[data-smart-x-video]').count()===1);
+  await page.unroute('https://x.com/**');
+  await page.goto('http://127.0.0.1:8766/Smart%20Video%20Viewer/tests/x-video-fixture.html');
+  check('no quick entry outside X',await page.locator('[data-smart-x-video]').count()===0);
+  return {passed:results.length,results};
+}

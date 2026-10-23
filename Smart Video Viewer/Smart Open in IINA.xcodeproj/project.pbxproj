@@ -34,6 +34,7 @@
 		E2E530EC3003CA1F000F6095 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = E2E530E83003CA1F000F6095 /* manifest.json */; };
 		E2E530ED3003CA1F000F6095 /* content.js in Resources */ = {isa = PBXBuildFile; fileRef = E2E530E93003CA1F000F6095 /* content.js */; };
 		B10000000000000000000005 /* subtitles.js in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000005 /* subtitles.js */; };
+		B10000000000000000000006 /* x-video.js in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000006 /* x-video.js */; };
 		B10000000000000000000001 /* viewer.js in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* viewer.js */; };
 		B10000000000000000000002 /* popup.html in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002 /* popup.html */; };
 		B10000000000000000000003 /* popup.js in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* popup.js */; };
@@ -95,6 +96,7 @@
 		E2E530E83003CA1F000F6095 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = manifest.json; path = Resources/manifest.json; sourceTree = "<group>"; };
 		E2E530E93003CA1F000F6095 /* content.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = content.js; path = Resources/content.js; sourceTree = "<group>"; };
 		B20000000000000000000005 /* subtitles.js */ = {isa = PBXFileReference; name = subtitles.js; path = Resources/subtitles.js; sourceTree = "<group>"; };
+		B20000000000000000000006 /* x-video.js */ = {isa = PBXFileReference; name = x-video.js; path = Resources/x-video.js; sourceTree = "<group>"; };
 		B20000000000000000000001 /* viewer.js */ = {isa = PBXFileReference; name = viewer.js; path = Resources/viewer.js; sourceTree = "<group>"; };
 		B20000000000000000000002 /* popup.html */ = {isa = PBXFileReference; name = popup.html; path = Resources/popup.html; sourceTree = "<group>"; };
 		B20000000000000000000003 /* popup.js */ = {isa = PBXFileReference; name = popup.js; path = Resources/popup.js; sourceTree = "<group>"; };
@@ -182,6 +184,7 @@
 				B20000000000000000000003 /* popup.js */,
 				B20000000000000000000002 /* popup.html */,
 				B20000000000000000000005 /* subtitles.js */,
+				B20000000000000000000006 /* x-video.js */,
 				B20000000000000000000001 /* viewer.js */,
 				A20000000000000000000001 /* icon-16.png */,
 				A20000000000000000000002 /* icon-32.png */,
@@ -304,6 +307,7 @@
 				B10000000000000000000003 /* popup.js in Resources */,
 				B10000000000000000000002 /* popup.html in Resources */,
 				B10000000000000000000005 /* subtitles.js in Resources */,
+				B10000000000000000000006 /* x-video.js in Resources */,
 				B10000000000000000000001 /* viewer.js in Resources */,
 				E2E530EB3003CA1F000F6095 /* README.md in Resources */,
 				E2E530EC3003CA1F000F6095 /* manifest.json in Resources */,

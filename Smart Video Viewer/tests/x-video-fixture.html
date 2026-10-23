@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>X quick viewer fixture</title>
+<style>body{margin:0;background:#111;color:#eee;font:16px system-ui}main{width:560px;margin:auto}article{border:1px solid #555;padding:20px;margin:20px 0}video{width:100%;height:250px;background:#253247}button{font:inherit}footer{height:1000px}</style>
+<main><h1>X 视频快捷观影测试</h1><article><p>视频一</p><div data-testid="videoPlayer"><video muted playsinline></video></div></article><article><p>视频二</p><div data-testid="videoPlayer"><video muted playsinline></video></div></article><footer></footer></main>
+<script>
+window.siteClicks=0;document.addEventListener('click',()=>siteClicks++);
+window.browser={storage:{local:{get:async()=>({}),set:async()=>{}}},runtime:{getURL:name=>'/Smart%20Video%20Viewer/Smart%20Open%20in%20IINA%20Extension/Resources/'+name,sendMessage:async()=>{}}};
+const canvas=document.createElement('canvas');canvas.width=640;canvas.height=360;
+const ctx=canvas.getContext('2d');function paint(){ctx.fillStyle='#253247';ctx.fillRect(0,0,640,360);ctx.fillStyle='#dbe7f1';ctx.font='30px system-ui';ctx.fillText('Original player · 原视频',140,180);requestAnimationFrame(paint)}paint();
+for(const video of document.querySelectorAll('video')){video.srcObject=canvas.captureStream(10);video.play();}
+</script>
+<script src="../Smart%20Open%20in%20IINA%20Extension/Resources/subtitles.js"></script>
+<script src="../Smart%20Open%20in%20IINA%20Extension/Resources/viewer.js"></script>
+<script src="../Smart%20Open%20in%20IINA%20Extension/Resources/x-video.js"></script>

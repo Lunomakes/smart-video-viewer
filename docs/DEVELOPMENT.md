@@ -49,3 +49,9 @@ CI uses an ephemeral Ubuntu runner and Node.js 22 with read-only repository perm
 新增的 `Smart Video Viewer/tests/subtitle-fixture.html` 使用 Canvas 生成测试视频，无外部媒体和网站登录依赖。先在仓库根目录运行 `node "Smart Video Viewer/tests/serve.mjs"`，用 Playwright 打开 `http://127.0.0.1:8766/Smart%20Video%20Viewer/tests/subtitle-fixture.html`，再将 `subtitle-browser-checks.js` 作为 Playwright CLI 的 `run-code` 函数执行。截图输出到 `output/playwright/`。
 
 The tracked subtitle fixture generates synthetic video with Canvas. Start the local server above, open the fixture in Playwright, and run `subtitle-browser-checks.js` through the CLI's `run-code`. It checks native tracks, SRT import, shadow discovery, hover-only controls, narrow layout and restoration. Browser checks use mocked extension messaging and are not Safari extension end-to-end tests.
+
+## X 快捷观影 / X quick entry
+
+`x-video.js` 仅在 X / Twitter 顶层页面运行，给已加载的视频添加右上角快捷入口，沿用原视频元素及现有观影控制。鼠标移入视频或键盘聚焦时显示；退出恢复页面；节点移除时清理入口。不包含连续刷视频，也不会请求 X API 或读取账户凭据。
+
+启动上述本地服务器后，通过 Playwright CLI 的 `run-code` 执行 `tests/x-video-browser-checks.js`。驱动把合成测试页路由到 X 域名，验证域名限制、多视频精确选择、键盘进入、退出恢复、节点替换和页面生命周期；未登录真实 X 账户，不构成 Safari 真实信息流验收。截图位于 `output/playwright/x-quick-entry.png`。
