@@ -182,6 +182,8 @@
       :host { color-scheme:dark; font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#f5f5f7; }
       * { box-sizing:border-box; } button,input,select { font:inherit; }
       .backdrop { position:fixed;inset:0;background:rgba(0,0,0,.90);pointer-events:auto; }
+      .cursor-shield { position:fixed;inset:0;width:100%;height:100%;pointer-events:none; }
+      .cursor-shield path { fill:transparent;fill-rule:evenodd;pointer-events:fill;cursor:default; }
       .dock { position:fixed;bottom:24.31px;left:50%;transform:translateX(-50%) scale(.9326655944);transform-origin:center bottom;width:min(560px,calc(100vw - 32px));pointer-events:auto; }
       .panel { opacity:1;transition:opacity 180ms ease-out;padding:10px 14px 8px;background:#252527;border:1px solid rgba(255,255,255,.18);border-radius:12px;pointer-events:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 8px rgba(0,0,0,.28); }
       @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
@@ -215,6 +217,7 @@
       @media(max-width:540px) { .dock { bottom:10px; }.panel { padding:8px 10px; }.row { gap:6px; }.main { gap:4px; }.main button { padding:4px;min-width:28px;font-size:12px; }.main .play { min-width:34px;font-size:18px; }#volume { display:none; }#rate-range { width:80px; } }
       @media(max-height:440px) { details,.settings { display:none; }.dock { bottom:6px; }.panel { padding:8px 12px; }.status { margin-top:4px; } }
       </style>
+      <svg class="cursor-shield" aria-hidden="true" focusable="false"><path/></svg>
       <section class="video-info" aria-label="视频信息" hidden><h2 class="video-title"></h2><p class="video-actors"></p></section>
       <div class="dock">
       <section class="panel" role="region" aria-label="视频播放控制">
@@ -230,6 +233,8 @@
         <details><summary>快捷键与播放说明</summary><p>← / J 快退，→ / L 快进；空格 / K 播放暂停；[ / ] 调速 0.1×；R 恢复 1×；M 静音；F 全屏；Esc 退出。输入数值时不触发快捷键。极端倍速可能静音或不受浏览器支持。全屏使用 Safari 原生控制，退出全屏后继续使用这里的倍速与秒数设置。</p></details>
       </section></div>`;
     const information = root.querySelector('.video-info');
+    const cursorShield = root.querySelector('.cursor-shield');
+    const cursorRegion = cursorShield.querySelector('path');
     information.hidden = !info.title && !info.actors.length;
     const titleNode = root.querySelector('.video-title');
     titleNode.textContent = info.title; titleNode.hidden = !info.title;
@@ -237,7 +242,7 @@
     actorsNode.textContent = info.actors.length ? `演员：${info.actors.join(' · ')}` : '';
     actorsNode.hidden = !info.actors.length;
     const backdrop = document.createElement('div');
-    backdrop.style.cssText = 'position:fixed!important;inset:0!important;background:rgba(0,0,0,.90)!important;z-index:2147483645!important;pointer-events:auto!important;';
+    backdrop.style.cssText = 'position:fixed!important;inset:0!important;background:rgba(0,0,0,.90)!important;z-index:2147483645!important;pointer-events:auto!important;cursor:default!important;';
     // The backdrop must sit below the original video, outside the controls' stacking context.
     const originalVideoRect = video.getBoundingClientRect();
     const fallbackRatio = originalVideoRect.width > 0 && originalVideoRect.height > 0 ? originalVideoRect.width / originalVideoRect.height : 16 / 9;
@@ -292,6 +297,18 @@
     scheduleHide(2000);
 
     const save = () => { s.settingsDirty = true; clearTimeout(s.saveTimer); s.saveTimer = setTimeout(() => { s.saveTimer = null; browser.storage.local.set({ viewerSettings: { ...settings } }).then(() => { s.settingsDirty = false; }).catch(() => status('设置未能保存，本次播放仍可使用。')); }, 200); };
+    function updateCursorShield() {
+      // A transparent region above the video catches letterboxing without
+      // clipping native captions or changing the original player's styles.
+      cursorShield.style.display = nativePresentation() ? 'none' : 'block';
+      const rect = video.getBoundingClientRect();
+      const ratio = video.videoWidth > 0 && video.videoHeight > 0 ? video.videoWidth / video.videoHeight : fallbackRatio;
+      const width = Math.min(rect.width, rect.height * ratio);
+      const height = width / ratio;
+      const left = rect.left + (rect.width - width) / 2;
+      const top = rect.top + (rect.height - height) / 2;
+      cursorRegion.setAttribute('d', `M0 0H${innerWidth}V${innerHeight}H0Z M${left} ${top}H${left + width}V${top + height}H${left}Z`);
+    }
     function layout() {
       // Fit the actual picture, not an oversized video box containing clickable letterboxing.
       const ratio = video.videoWidth > 0 && video.videoHeight > 0 ? video.videoWidth / video.videoHeight : fallbackRatio;
@@ -303,6 +320,7 @@
       styles.set(video, { left: `${(innerWidth - width) / 2}px`, top: `${(innerHeight - height) / 2}px`,
         right: 'auto', bottom: 'auto', width: `${width}px`, height: `${height}px`,
         'object-position': '50% 50%', 'aspect-ratio': 'auto' });
+      updateCursorShield();
     }
     function setRate(value) {
       const rate = Number(value);
@@ -360,7 +378,7 @@
       document.pictureInPictureElement === video || video.webkitPresentationMode === 'picture-in-picture';
     for (const type of ['pointerdown', 'mousedown', 'touchstart']) on(window, type, event => {
       entryRecovery = false;
-      if (!nativePresentation() && !event.composedPath().includes(host)) event.stopImmediatePropagation();
+      if (!nativePresentation() && !event.composedPath().includes(panel)) event.stopImmediatePropagation();
     }, { capture: true });
     on(window, 'keydown', () => { entryRecovery = false; }, { capture: true });
     on(window, 'click', event => {
@@ -430,6 +448,11 @@
     });
     on(video, 'error', () => status('网页视频加载失败，请退出观影并在原网页重试。'));
     on(window, 'resize', layout); on(video, 'loadedmetadata', layout); on(video, 'resize', layout);
+    const videoResize = new ResizeObserver(updateCursorShield);
+    videoResize.observe(video);
+    abort.signal.addEventListener('abort', () => videoResize.disconnect(), { once: true });
+    on(document, 'fullscreenchange', updateCursorShield);
+    on(video, 'webkitpresentationmodechanged', updateCursorShield);
     s.observer = new MutationObserver(() => { if (!video.isConnected || !host.isConnected) close(); });
     s.observer.observe(document, { childList: true, subtree: true });
     s.timer = setInterval(() => { if (!video.isConnected) close(); }, 1000);

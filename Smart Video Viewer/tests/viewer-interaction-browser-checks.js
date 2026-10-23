@@ -5,6 +5,8 @@ async (page) => {
   await page.waitForFunction(() => document.querySelector('video').videoWidth > 0);
   await page.evaluate(async () => {
     window.targetVideo = document.querySelector('video');
+    document.body.style.cursor = 'pointer';
+    targetVideo.style.cursor = 'pointer';
     await targetVideo.play();
     await smartVideoViewer.openVideo(targetVideo);
     targetVideo.pause(); // Simulate the site's visibility callback during entry.
@@ -52,7 +54,15 @@ async (page) => {
       targetVideo.style.setProperty(key, value, 'important');
     }
   });
+  await page.waitForFunction(() => document.elementFromPoint(640, 20) !== targetVideo);
+  check('letterbox uses arrow even when the page and video request a hand', await page.evaluate(() => {
+    const host = document.elementFromPoint(640, 20);
+    const target = host.shadowRoot?.elementFromPoint(640, 20) || host;
+    return getComputedStyle(target).cursor === 'default';
+  }));
+  check('actual picture keeps its hand cursor', await page.evaluate(() => document.elementFromPoint(640, 450) === targetVideo && getComputedStyle(targetVideo).cursor === 'pointer'));
   await page.mouse.click(640, 20);
   check('letterbox inside the video element exits instead of pausing', await page.evaluate(() => !smartVideoViewer.active() && !targetVideo.paused));
+  check('viewer leaves video clipping and site cursor unchanged', await page.evaluate(() => targetVideo.style.clipPath === '' && getComputedStyle(targetVideo).cursor === 'pointer'));
   return { passed: results.length, results };
 }

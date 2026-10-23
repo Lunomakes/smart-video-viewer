@@ -5,6 +5,8 @@ Compiled from source and local version records. Historical version numbers do no
 
 ## Unreleased
 
+- 按实际画面边界接管视频外的交互区域，让网页撑大的视频内部黑边显示普通箭头，保留原视频和字幕绘制。 / Use the picture bounds to handle interactions outside the video, giving site-expanded letterboxing the default cursor while preserving native video and caption rendering.
+
 - 2.0.7：更新扩展版本和构建号；检测请求增加超时，帧列表查询超时回退到主页面，避免弹窗一直停在检测中。 / Update extension and build versions; bound detection requests and fall back to the main frame if frame enumeration times out.
 
 - 增加标准字幕轨道选择、关闭与本地 SRT / VTT 导入；退出时恢复网页设置。 / Add standard subtitle selection, off control and local SRT / VTT import; restore site settings on exit.
