@@ -6,6 +6,8 @@ Compiled from source and local version records. Historical version numbers do no
 ## Unreleased
 
 - 检测请求增加超时，帧列表查询超时回退到主页面，避免弹窗一直停在检测中。 / Bound detection requests and fall back to the main frame if frame enumeration times out.
+- 增加标准字幕轨道选择、关闭与本地 SRT / VTT 导入；退出时恢复网页设置。 / Add standard subtitle selection, off control and local SRT / VTT import; restore site settings on exit.
+- 将媒体采集、暂停与 iframe 定位扩展到开放 Shadow DOM。 / Extend media collection, pausing and iframe lookup to open Shadow DOM.
 
 - 清理源码个人标识与发布包构建路径；增加 CI 和打包隐私检查。 / Remove personal source identifiers and build paths from release binaries; add CI and packaging privacy checks.
 

@@ -23,5 +23,5 @@ jobs:
         run: |
           node scripts/privacy-check.mjs
           node scripts/privacy-check.mjs --history HEAD
-      - name: Run background regression tests
-        run: node --test "Smart Video Viewer/tests/background.test.mjs"
+      - name: Run background and subtitle regression tests
+        run: node --test "Smart Video Viewer/tests/"*.test.mjs

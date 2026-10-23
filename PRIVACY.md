@@ -18,3 +18,9 @@ The current code has no telemetry, analytics SDK or upload path to a developer s
 选择外部播放会将 URL 传递给本机 IINA，IINA 会按自身行为请求远端资源。仅授权需要使用的网站；反馈问题前请遮盖私人信息，不提交实际签名 URL、Cookie 或完整浏览记录。
 
 External playback passes the URL to local IINA, which requests remote resources according to its own behavior. Grant access only to intended sites. Redact private data from reports; do not submit signed URLs, cookies or browsing history.
+
+## 本地字幕 / Local subtitles (unreleased)
+
+本地字幕仅经用户选择后读取，转换为当前页面内的临时 WebVTT，并在退出观影时移除。扩展不上传文件、不持久保存字幕内容或文件名。字幕附加到原网页播放器，网站脚本可能读取轨道；这不是与网站隔离的私密文件查看器。
+
+Local subtitles are read only after file selection, converted into temporary page-local WebVTT, and removed on viewer exit. The extension does not upload files or persist subtitle content or filenames. Tracks attach to the site's original video and may be read by page scripts; this is not a private viewer isolated from the site.

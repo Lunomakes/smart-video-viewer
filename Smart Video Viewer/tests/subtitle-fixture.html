@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><title>Video subtitle compatibility fixture</title>
+<style>body{margin:0;background:#263041;color:white;font:20px system-ui}.player{margin:60px auto;width:640px;transform:translateZ(0)}video{width:640px;height:360px;background:#172538}h1{text-align:center}</style>
+<h1>Subtitle compatibility check</h1><div class="player"><video controls></video></div><div id="shadow-player"></div>
+<script>
+window.browser={storage:{local:{get:async()=>({}),set:async()=>{}}},runtime:{sendMessage:async()=>{}}};
+const video=document.querySelector('video');
+const canvas=document.createElement('canvas');canvas.width=1280;canvas.height=720;
+const ctx=canvas.getContext('2d');function paint(){ctx.fillStyle='#172538';ctx.fillRect(0,0,1280,720);ctx.fillStyle='#b7d6e9';ctx.font='36px system-ui';ctx.textAlign='center';ctx.fillText('Video · Subtitle Preview',640,330);requestAnimationFrame(paint)}paint();
+video.srcObject=canvas.captureStream(10);video.muted=true;video.play();
+const chinese=video.addTextTrack('subtitles','中文','zh');chinese.addCue(new VTTCue(0,10000,'这是字幕显示测试'));chinese.mode='showing';
+const english=video.addTextTrack('subtitles','English','en');english.addCue(new VTTCue(0,10000,'This is a subtitle display test'));english.mode='disabled';
+const shadow=document.getElementById('shadow-player').attachShadow({mode:'open'});shadow.innerHTML='<video style="width:320px;height:180px"></video><iframe src="about:blank"></iframe>';
+</script>
+<script src="../Smart%20Open%20in%20IINA%20Extension/Resources/subtitles.js"></script>
+<script src="../Smart%20Open%20in%20IINA%20Extension/Resources/viewer.js"></script>

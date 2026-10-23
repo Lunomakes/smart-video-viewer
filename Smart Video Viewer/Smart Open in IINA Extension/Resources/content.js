@@ -11,10 +11,12 @@ function addCandidate(target, value, metadata = {}) {
   }
 }
 
+const queryMedia = selector => globalThis.smartVideoViewer?.deepQuery(selector) || [...document.querySelectorAll(selector)];
+
 function collectMedia() {
   const candidates = [];
 
-  for (const video of document.querySelectorAll("video")) {
+  for (const video of queryMedia("video")) {
     const rect = video.getBoundingClientRect();
     const metadata = {
       source: "video-element",
@@ -31,7 +33,7 @@ function collectMedia() {
     addCandidate(candidates, entry.name, { source: "page-resource" });
   }
 
-  for (const element of document.querySelectorAll("a[href], source[src]")) {
+  for (const element of queryMedia("a[href], source[src]")) {
     addCandidate(candidates, element.href || element.src, { source: "page-link" });
   }
 
@@ -45,7 +47,7 @@ browser.runtime.onMessage.addListener((message) => {
   if (message?.type === "collect-media") return Promise.resolve(collectMedia());
   if (message?.type === "pause-media") {
     let pausedCount = 0;
-    for (const media of document.querySelectorAll("video, audio")) {
+    for (const media of queryMedia("video, audio")) {
       if (!media.paused) {
         media.pause();
         pausedCount += 1;

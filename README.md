@@ -20,6 +20,14 @@
 
 玻璃控制台由 CSS 实现，并非原生 Liquid Glass 控件。当前界面文案主要为中文；英文 README 不代表已有英文界面。
 
+## 源码新增功能（尚未发布）
+
+- 字幕菜单提供“跟随网页”、关闭及语言选择，支持标准字幕轨道，包括网站动态加载的 WebVTT。
+- 可导入 UTF-8 SRT / VTT（最多 5 MB），仅用于本次观影，退出时移除。扩展不上传字幕；字幕附加到网页播放器后，网页脚本可能读取。
+- 视频采集、暂停和嵌入帧定位统一支持开放 Shadow DOM。仍需先让原网页加载出视频，并授权嵌入播放器域名。
+
+这些更改不包含在下方现有 v2.0.6 下载包中。已用本地合成视频验证标准字幕交互；真实网站在 Safari 中的完整播放兼容性尚未确认。网页自绘字幕、封闭播放器及加载失败的字幕源仍不保证支持；本地字幕还可能受网站内容安全策略限制。
+
 ## 获取与构建
 
 现提供 [v2.0.6 测试版 DMG / ZIP](https://github.com/Dashmett/smart-video-viewer/releases/tag/v2.0.6)，仅支持 **Apple Silicon**。这是临时签名、未公证的开发测试包，需要 Safari 开发测试配置，不能保证下载即用；详见[安装说明](docs/INSTALL.md)。尚无 Developer ID 正式发行包或 App Store 版本。
@@ -81,7 +89,7 @@ Node.js 22 或更新版本可运行无需第三方依赖的检查：
 ```sh
 node scripts/check.mjs
 node scripts/privacy-check.mjs
-node --test "Smart Video Viewer/tests/background.test.mjs"
+node --test "Smart Video Viewer/tests/"*.test.mjs
 ```
 
 [GitHub Actions](.github/workflows/checks.yml) 会在推送到 main、创建或更新 PR 时自动运行，也可在仓库 Actions → Checks → Run workflow 手动触发。这两项检查覆盖脚本语法、资源引用、版本一致性与后台回归，**不等同于 Safari 实机端到端验证**。Xcode 构建与手动测试见[开发指南](docs/DEVELOPMENT.md)。

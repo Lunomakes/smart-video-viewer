@@ -20,6 +20,14 @@ Focus on web video in Safari: center and enlarge the existing player, dim the pa
 
 The console uses CSS, not native Liquid Glass components. The current interface is primarily in Chinese; this English README does not imply an English UI is available.
 
+## Source additions (not yet released)
+
+- Choose site defaults, turn subtitles off, or select a language from standard text tracks, including dynamically loaded WebVTT.
+- Import UTF-8 SRT / VTT files up to 5 MB for the current viewing session; imported tracks are removed on exit. The extension does not upload subtitles, but page scripts may read tracks attached to their player.
+- Media collection, pausing and embedded-frame lookup now share open Shadow DOM discovery. Let the original page load its video first and grant access to embedded player domains.
+
+These changes are not included in the existing v2.0.6 downloads below. Standard subtitle interactions have been checked with synthetic local video; full playback compatibility with real sites in Safari remains unverified. Custom subtitle overlays, closed players and failed subtitle sources are not guaranteed to work. Site content security policy may also block local subtitle loading.
+
 ## Get and build
 
 A [v2.0.6 preview DMG / ZIP](https://github.com/Dashmett/smart-video-viewer/releases/tag/v2.0.6) is available for **Apple Silicon only**. It is ad-hoc signed and unnotarized, requires Safari development-testing setup, and is not guaranteed to run immediately after download. See the [installation guide](docs/INSTALL.md). No Developer ID distribution build or App Store version is available.
@@ -81,7 +89,7 @@ Run the dependency-free checks with Node.js 22 or later:
 ```sh
 node scripts/check.mjs
 node scripts/privacy-check.mjs
-node --test "Smart Video Viewer/tests/background.test.mjs"
+node --test "Smart Video Viewer/tests/"*.test.mjs
 ```
 
 [GitHub Actions](.github/workflows/checks.yml) runs on pushes to main and pull requests, and can be triggered manually under Actions → Checks → Run workflow. The checks cover script syntax, resource references, version consistency and background regressions. **They do not replace real Safari end-to-end verification.** See [Development](docs/DEVELOPMENT.md) for builds and manual checks.

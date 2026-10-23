@@ -8,7 +8,7 @@ From the repository root, use Node.js 22+; no npm dependencies are required.
 ```sh
 node scripts/check.mjs
 node scripts/privacy-check.mjs
-node --test "Smart Video Viewer/tests/background.test.mjs"
+node --test "Smart Video Viewer/tests/"*.test.mjs
 ```
 
 ## Xcode
@@ -43,3 +43,9 @@ The configuration is in [checks.yml](../.github/workflows/checks.yml). It runs o
 
 CI 使用临时 Ubuntu 环境和 Node.js 22，仅需要仓库内容读取权限，不需要 Apple 签名证书或项目 Secrets。它执行静态检查和后台回归，不构建 macOS App，也不验证真实 Safari 播放或图标视觉效果。
 CI uses an ephemeral Ubuntu runner and Node.js 22 with read-only repository permissions. No Apple signing certificates or project secrets are needed. It checks source/assets and background regressions, not macOS builds, actual Safari playback or visual icon quality.
+
+## 字幕浏览器检查 / Subtitle browser checks
+
+新增的 `Smart Video Viewer/tests/subtitle-fixture.html` 使用 Canvas 生成测试视频，无外部媒体和网站登录依赖。先在仓库根目录运行 `node "Smart Video Viewer/tests/serve.mjs"`，用 Playwright 打开 `http://127.0.0.1:8766/Smart%20Video%20Viewer/tests/subtitle-fixture.html`，再将 `subtitle-browser-checks.js` 作为 Playwright CLI 的 `run-code` 函数执行。截图输出到 `output/playwright/`。
+
+The tracked subtitle fixture generates synthetic video with Canvas. Start the local server above, open the fixture in Playwright, and run `subtitle-browser-checks.js` through the CLI's `run-code`. It checks native tracks, SRT import, shadow discovery, hover-only controls, narrow layout and restoration. Browser checks use mocked extension messaging and are not Safari extension end-to-end tests.

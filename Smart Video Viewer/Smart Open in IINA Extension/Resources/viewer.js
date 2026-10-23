@@ -13,11 +13,12 @@
   const valid = (n, min, max, fallback) => Number.isFinite(Number(n)) && Number(n) >= min && Number(n) <= max ? Number(n) : fallback;
   const cleanSettings = (s = {}) => ({ rate: valid(s.rate, 0.1, 16, 1), seekSeconds: valid(s.seekSeconds, 0.1, 600, 5) });
   const parentElement = (el) => el.parentElement || el.getRootNode()?.host;
-  function allVideos(root = document) {
-    const result = [...root.querySelectorAll('video')];
-    for (const el of root.querySelectorAll('*')) if (el.shadowRoot) result.push(...allVideos(el.shadowRoot));
+  function deepQuery(selector, root = document) {
+    const result = [...root.querySelectorAll(selector)];
+    for (const el of root.querySelectorAll('*')) if (el.shadowRoot) result.push(...deepQuery(selector, el.shadowRoot));
     return result;
   }
+  const allVideos = () => deepQuery('video');
   function inventory() {
     return allVideos().map(video => {
       if (!ids.has(video)) ids.set(video, String(++serial));
@@ -74,7 +75,7 @@
   window.addEventListener('message', event => {
     const data = event.data;
     if (!preparedToken || data?.type !== 'smart-viewer-frame' || data.token !== preparedToken) return;
-    const frame = [...document.querySelectorAll('iframe, frame')].find(el => el.contentWindow === event.source);
+    const frame = deepQuery('iframe, frame').find(el => el.contentWindow === event.source);
     if (!frame) return;
     if (!data.active) { if (promoted?.frame === frame) restoreFrame(); return; }
     if (promoted?.frame === frame) return;
@@ -95,7 +96,7 @@
     if (!session) { restoreFrame(); return; }
     const s = session; session = null;
     s.abort.abort(); s.observer.disconnect(); clearInterval(s.timer); clearTimeout(s.saveTimer); clearTimeout(s.hideTimer);
-    s.host.remove(); s.styles.restore();
+    s.subtitles?.dispose(); s.host.remove(); s.styles.restore();
     if (s.video.controls === false) s.video.controls = s.originalControls;
     if (s.video.playbackRate === s.appliedRate) {
       try { s.video.playbackRate = s.originalRate; } catch { /* Site may have replaced media. */ }
@@ -123,7 +124,7 @@
     root.innerHTML = `
       <style>
       :host { color-scheme:dark; font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#f5f5f7; }
-      * { box-sizing:border-box; } button,input { font:inherit; }
+      * { box-sizing:border-box; } button,input,select { font:inherit; }
       .backdrop { position:fixed;inset:0;background:rgba(0,0,0,.90);pointer-events:auto; }
       .dock { position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:min(680px,calc(100vw - 32px));pointer-events:auto; }
       .panel { opacity:1;transition:opacity 180ms ease-out;padding:16px 20px 12px;background:#252527;border:1px solid rgba(255,255,255,.18);border-radius:16px;pointer-events:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 8px rgba(0,0,0,.28); }
@@ -139,11 +140,12 @@
       .settings { margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.16);justify-content:space-between;flex-wrap:wrap;gap:12px; }
       button { min-width:36px;min-height:36px;padding:7px 10px;background:transparent;border:0;border-radius:8px;color:#f5f5f7;cursor:pointer;white-space:nowrap; }
       button:hover { background:#ffffff1c; } button:active { background:#ffffff30; } button:disabled { opacity:.45;cursor:default; }
-      button:focus-visible,input:focus-visible,summary:focus-visible { outline:2px solid #94c6ff;outline-offset:3px; }
+      button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible { outline:2px solid #94c6ff;outline-offset:3px; }
       .play { font-size:22px;min-width:48px; } .secondary { color:#c4c4cc;font-size:12px; }
       input { accent-color:#e9e9ed;color:#f5f5f7;min-width:0; } input[type=range] { cursor:pointer; }
       #timeline { flex:1;width:50px; } #volume { width:70px; } #rate-range { width:110px; }
       input[type=number] { width:64px;padding:6px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.28);border-radius:6px; }
+      .subtitles { margin-top:6px;flex-wrap:wrap; } select { max-width:210px;min-width:100px;color:#f5f5f7;background:#252527;border:1px solid #ffffff47;border-radius:6px;padding:4px;min-height:28px; }
       label { display:flex;align-items:center;gap:7px;color:#d8d8df;white-space:nowrap; }
       .clock { font-size:12px;font-variant-numeric:tabular-nums;min-width:38px; }
       .spacer { flex:1; } .status { font-size:12px;min-height:17px;margin:10px 0 0;color:#c4c4cc;text-align:center; }
@@ -160,6 +162,7 @@
         </div>
         <div class="row timeline"><span id="elapsed" class="clock">0:00</span><input id="timeline" type="range" min="0" max="100" step="0.1" value="0" aria-label="播放进度"><span id="duration" class="clock">0:00</span></div>
         <div class="row settings"><label>倍速 <input id="rate-range" type="range" min="0.1" max="16" step="0.1" aria-label="连续倍速滑块"><input id="rate" type="number" min="0.1" max="16" step="0.1" aria-label="播放倍速">×</label><button id="reset">恢复 1×</button><label>每次跳转 <input id="seek" type="number" min="0.1" max="600" step="any" aria-label="每次跳转秒数">秒</label></div>
+        <div class="row subtitles"><label>字幕 <select id="subtitles" aria-label="字幕轨道"></select></label><button id="import-subtitles">导入 SRT / VTT</button><input id="subtitle-file" type="file" accept=".srt,.vtt" hidden></div>
         <p id="status" class="status" role="status" aria-live="polite">← → 快退／快进 · 空格 暂停 · [ ] 调节倍速</p>
         <details><summary>快捷键与播放说明</summary><p>← / J 快退，→ / L 快进；空格 / K 播放暂停；[ / ] 调速 0.1×；R 恢复 1×；M 静音；F 全屏；Esc 退出。输入数值时不触发快捷键。极端倍速可能静音或不受浏览器支持。全屏使用 Safari 原生控制，退出全屏后继续使用这里的倍速与秒数设置。</p></details>
       </section></div>`;
@@ -179,6 +182,13 @@
     const $ = name => root.getElementById(name);
     const on = (target, type, fn, opts = {}) => target.addEventListener(type, fn, { ...opts, signal: abort.signal });
     const status = text => { $('status').textContent = text; };
+    s.subtitles = globalThis.smartVideoSubtitles.attach(video, $('subtitles'), status);
+    on($('import-subtitles'), 'click', () => $('subtitle-file').click());
+    on($('subtitle-file'), 'change', async () => {
+      try { await s.subtitles.importFile($('subtitle-file').files[0]); }
+      catch (error) { if (session === s) status(error.message); }
+      $('subtitle-file').value = '';
+    });
     const dock = root.querySelector('.dock');
     const panel = root.querySelector('.panel');
     let pointerInside = dock.matches(':hover');
@@ -284,7 +294,7 @@
       if (path.some(el => el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)))) return;
       if (e.key === 'Tab') {
         if (panel.inert) { e.preventDefault(); return; }
-        const focusable = [...root.querySelectorAll('button,input,summary')].filter(el => !el.disabled && !el.hidden && el.getClientRects().length);
+        const focusable = [...root.querySelectorAll('button,input,select,summary')].filter(el => !el.disabled && !el.hidden && el.getClientRects().length);
         const first = focusable[0], last = focusable.at(-1), active = root.activeElement;
         if (e.shiftKey && (!active || active === first)) { e.preventDefault(); last.focus(); }
         else if (!e.shiftKey && (!active || active === last)) { e.preventDefault(); first.focus(); }
@@ -316,7 +326,7 @@
     return { ok: true };
   }
   window.addEventListener('pagehide', () => { close(); restoreFrame(); preparedToken = null; });
-  globalThis.smartVideoViewer = { inventory, open, close, cleanSettings,
+  globalThis.smartVideoViewer = { inventory, open, close, cleanSettings, deepQuery,
     prepare(token) { if (token !== preparedToken) { close(); restoreFrame(); } preparedToken = token; },
     active: () => Boolean(session) };
 })();
