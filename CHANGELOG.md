@@ -6,6 +6,7 @@ Compiled from source and local version records. Historical version numbers do no
 ## Unreleased
 
 - 按实际画面边界接管视频外的交互区域，让网页撑大的视频内部黑边显示普通箭头，保留原视频和字幕绘制。 / Use the picture bounds to handle interactions outside the video, giving site-expanded letterboxing the default cursor while preserving native video and caption rendering.
+- 增加 Apple Icon Composer 原生分层应用图标，支持浅色与深色外观。 / Add a native layered app icon authored for Apple Icon Composer, with light and dark appearances.
 
 - 2.0.7：更新扩展版本和构建号；检测请求增加超时，帧列表查询超时回退到主页面，避免弹窗一直停在检测中。 / Update extension and build versions; bound detection requests and fall back to the main frame if frame enumeration times out.
 

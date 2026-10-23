@@ -1,0 +1,97 @@
+{
+  "features": [
+    "refractivity"
+  ],
+  "groups": [
+    {
+      "layers": [
+        {
+          "glass": true,
+          "image-name": "focus.svg",
+          "name": "Focus",
+          "position": {
+            "scale": 1.08,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:0.03500,0.07500,0.15000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.85,0.94,1,1"
+              }
+            }
+          ]
+        }
+      ],
+      "name": "Focus and Play",
+      "shadow": {
+        "kind": "layer-color",
+        "opacity": 0.35
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.18
+      }
+    },
+    {
+      "blur-material": 0,
+      "layers": [
+        {
+          "fill": {
+            "solid": "srgb:0.92000,0.98000,1.00000,0.05000"
+          },
+          "glass": true,
+          "image-name": "glass.svg",
+          "name": "Glass"
+        }
+      ],
+      "lighting": "combined",
+      "name": "Clear lens",
+      "refractivity": {
+        "depth": 0.6,
+        "enabled": true,
+        "strength": 0.6
+      },
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.12
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.92
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  },
+  "fill-specializations": [
+    {
+      "value": {
+        "linear-gradient": [
+          "srgb:0.97000,0.98500,1.00000,1.00000",
+          "srgb:0.86000,0.92000,0.98000,1.00000"
+        ]
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "linear-gradient": [
+          "srgb:0.08,0.12,0.19,1",
+          "srgb:0.025,0.045,0.085,1"
+        ]
+      }
+    }
+  ]
+}
