@@ -99,9 +99,18 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === "loading" || changeInfo.url) { mediaByTab.delete(tabId); lastStreamByTab.delete(tabId); }
 });
 
+async function bounded(promise, milliseconds = 2000) {
+  let timer;
+  try {
+    return await Promise.race([promise, new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Browser request timed out')), milliseconds);
+    })]);
+  } finally { clearTimeout(timer); }
+}
+
 async function frameIdsForTab(tabId) {
   try {
-    const frames = await browser.webNavigation.getAllFrames({ tabId });
+    const frames = await bounded(browser.webNavigation.getAllFrames({ tabId }));
     return [...new Set([0, ...frames.map((frame) => frame.frameId)])];
   } catch {
     return [0];
@@ -223,7 +232,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
   return (async () => {
     // Content scripts may request cleanup only. Opening IINA is a popup action.
     if (sender.tab && message.type !== 'close-viewer') return { ok: false, error: '请从扩展菜单操作。' };
-    const tab = sender.tab || (await browser.tabs.query({ active: true, currentWindow: true }))[0];
+    const tab = sender.tab || (await bounded(browser.tabs.query({ active: true, currentWindow: true })))[0];
     if (tab?.id === undefined) return { ok: false, error: '无法取得当前标签页。' };
     if (message.type === 'discover-videos') return discoverVideos(tab.id);
     if (pendingTabs.has(tab.id)) return { ok: false, error: '上一次操作尚未完成，请稍后重试。' };

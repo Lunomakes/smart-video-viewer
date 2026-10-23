@@ -5,6 +5,8 @@ Compiled from source and local version records. Historical version numbers do no
 
 ## Unreleased
 
+- 检测请求增加超时，帧列表查询超时回退到主页面，避免弹窗一直停在检测中。 / Bound detection requests and fall back to the main frame if frame enumeration times out.
+
 - 清理源码个人标识与发布包构建路径；增加 CI 和打包隐私检查。 / Remove personal source identifiers and build paths from release binaries; add CI and packaging privacy checks.
 
 - MIT 开源，补充中英文创作说明。 / Open source under MIT, with bilingual creation credits.

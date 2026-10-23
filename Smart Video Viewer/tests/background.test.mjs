@@ -71,3 +71,14 @@ test('no accessible frame gives an actionable permission error', async () => {
   const result=await f.events.message({type:'open-viewer'},{});
   assert.equal(result.ok,false); assert.match(result.error,/允许扩展访问/);
 });
+test('frame enumeration timeout falls back to main frame instead of hanging discovery', async () => {
+  const f=fixture(); f.browser.webNavigation.getAllFrames=()=>new Promise(()=>{});
+  const result=await f.events.message({type:'discover-videos'},{});
+  assert.equal(result.ok,true); assert.equal(result.videos.length,1);
+  assert.equal(result.videos[0].frameId,0);
+});
+test('active tab lookup timeout returns an error instead of hanging the popup', async () => {
+  const f=fixture(); f.browser.tabs.query=()=>new Promise(()=>{});
+  const result=await f.events.message({type:'discover-videos'},{});
+  assert.equal(result.ok,false); assert.match(result.error,/操作未完成/);
+});

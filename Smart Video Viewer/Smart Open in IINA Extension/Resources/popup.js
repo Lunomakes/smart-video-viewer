@@ -9,8 +9,14 @@ function lock(value) {
   if (!value) { $('viewer').disabled = !videos.length; $('videos').disabled = !videos.length; }
 }
 async function request(type, extra = {}) {
-  try { return await browser.runtime.sendMessage({ type, ...extra }); }
-  catch { return { ok: false, error: '扩展后台未连接，请在 Safari 设置中检查扩展是否启用。' }; }
+  let timer;
+  try {
+    return await Promise.race([
+      browser.runtime.sendMessage({ type, ...extra }),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('timeout')), 12000); })
+    ]);
+  } catch { return { ok: false, error: '扩展后台未响应。请在 Safari 扩展设置中关闭再启用此扩展，刷新网页后重新检测。' }; }
+  finally { clearTimeout(timer); }
 }
 async function refresh() {
   lock(true); status('正在检测当前网页…');
