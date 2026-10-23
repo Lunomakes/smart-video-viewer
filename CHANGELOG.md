@@ -5,10 +5,12 @@ Compiled from source and local version records. Historical version numbers do no
 
 ## Unreleased
 
-- 检测请求增加超时，帧列表查询超时回退到主页面，避免弹窗一直停在检测中。 / Bound detection requests and fall back to the main frame if frame enumeration times out.
+- 2.0.7：更新扩展版本和构建号；检测请求增加超时，帧列表查询超时回退到主页面，避免弹窗一直停在检测中。 / Update extension and build versions; bound detection requests and fall back to the main frame if frame enumeration times out.
+
 - 增加标准字幕轨道选择、关闭与本地 SRT / VTT 导入；退出时恢复网页设置。 / Add standard subtitle selection, off control and local SRT / VTT import; restore site settings on exit.
 - 将媒体采集、暂停与 iframe 定位扩展到开放 Shadow DOM。 / Extend media collection, pausing and iframe lookup to open Shadow DOM.
 - 为 X / Twitter 视频增加右上角快捷观影入口，保留原视频与播放进度；修复进入时意外暂停、页面布局恢复及画面外点击退出。 / Add a top-right viewer entry for X / Twitter videos while preserving the original player and progress; fix entry pauses, layout restoration and clicks outside the picture.
+- 显示明确的视频标题和演员信息，缺失或不明确时不显示；缩小控制台，信息与控制台一起自动隐藏。 / Show explicit video titles and cast when available and unambiguous; compact the controls and hide video information with them.
 
 - 清理源码个人标识与发布包构建路径；增加 CI 和打包隐私检查。 / Remove personal source identifiers and build paths from release binaries; add CI and packaging privacy checks.
 

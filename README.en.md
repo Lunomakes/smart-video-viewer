@@ -6,7 +6,7 @@ English · [简体中文](README.md)
 
 Focus on web video in Safari: center and enlarge the existing player, dim the page, adjust playback speed, and seek by a configurable interval. You can also request playback in IINA.
 
-**Current version: 2.0.6.** The extension and companion app retain the name **Smart Open in IINA**. This independent project is not affiliated with Apple or IINA and does not call private Safari Video Viewer APIs.
+**Current source version: 2.0.7 (unreleased).** The extension and companion app retain the name **Smart Open in IINA**. This independent project is not affiliated with Apple or IINA and does not call private Safari Video Viewer APIs.
 
 ## Features
 

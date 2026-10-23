@@ -6,7 +6,7 @@
 
 在 Safari 中专注观看网页视频：居中放大原有播放器，压暗网页，提供连续倍速与可自定义秒数的快进快退；也可请求使用 IINA 打开媒体。
 
-**当前版本：2.0.6。** Safari 和配套 App 中仍使用名称 **Smart Open in IINA**。这是独立的社区项目，不隶属于 Apple 或 IINA，也不调用 Safari 内置 Video Viewer 的私有接口。
+**当前源码版本：2.0.7（尚未发布）。** Safari 和配套 App 中仍使用名称 **Smart Open in IINA**。这是独立的社区项目，不隶属于 Apple 或 IINA，也不调用 Safari 内置 Video Viewer 的私有接口。
 
 ## 功能
 

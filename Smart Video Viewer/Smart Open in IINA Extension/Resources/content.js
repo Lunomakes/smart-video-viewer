@@ -64,9 +64,10 @@ browser.runtime.onMessage.addListener((message) => {
 browser.runtime.onMessage.addListener((message) => {
   const viewer = globalThis.smartVideoViewer;
   if (!viewer) return undefined;
+  if (message?.type === 'viewer-metadata') return Promise.resolve(viewer.metadata());
   if (message?.type === 'viewer-inventory') return Promise.resolve({ videos: viewer.inventory(), active: viewer.active() });
   if (message?.type === 'viewer-prepare') { viewer.prepare(message.token); return Promise.resolve({ ok: true }); }
-  if (message?.type === 'viewer-open') return viewer.open(message.id, message.token);
+  if (message?.type === 'viewer-open') return viewer.open(message.id, message.token, message.metadata);
   if (message?.type === 'viewer-close') { viewer.close(); return Promise.resolve({ ok: true }); }
   return undefined;
 });

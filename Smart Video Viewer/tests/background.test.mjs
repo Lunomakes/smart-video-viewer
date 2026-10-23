@@ -82,3 +82,17 @@ test('active tab lookup timeout returns an error instead of hanging the popup', 
   const result=await f.events.message({type:'discover-videos'},{});
   assert.equal(result.ok,false); assert.match(result.error,/操作未完成/);
 });
+
+test('sole iframe video receives explicit top page metadata', async () => {
+  const f = fixture();
+  const send = f.browser.tabs.sendMessage;
+  f.browser.tabs.sendMessage = async (id, message, options) => {
+    if (message.type === 'viewer-inventory' && options.frameId === 0) return {videos:[]};
+    if (message.type === 'viewer-metadata') return {title:'Example title', actors:['Example actor']};
+    return send(id, message, options);
+  };
+  const result = await f.events.message({type:'open-viewer'}, {});
+  assert.equal(result.ok, true);
+  const opened = f.calls.find(c => c[0] === 'frame' && c[2].type === 'viewer-open');
+  assert.equal(opened[2].metadata.title, 'Example title');
+});

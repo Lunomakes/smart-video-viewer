@@ -19,6 +19,49 @@
     return result;
   }
   const allVideos = () => deepQuery('video');
+  // Only use explicit video metadata; document titles and uploader names are not cast.
+  function metadata(video = null) {
+    const text = value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, 300) : '';
+    const names = value => [...new Set([value].flat().map(item => text(typeof item === 'string' ? item : item?.name)).filter(name => name && !/^https?:/i.test(name)))].slice(0, 12);
+    const meta = property => text(document.querySelector(`meta[property="${property}"]`)?.content);
+    const records = [];
+    function visit(value, depth = 0) {
+      if (!value || typeof value !== 'object' || depth > 12) return;
+      if (Array.isArray(value)) { value.forEach(item => visit(item, depth + 1)); return; }
+      if ([value['@type']].flat().some(type => ['VideoObject', 'Movie', 'TVEpisode'].includes(type))) records.push(value);
+      for (const key of ['@graph', 'mainEntity', 'video', 'subjectOf']) visit(value[key], depth + 1);
+    }
+    for (const script of document.querySelectorAll('script[type="application/ld+json"]')) {
+      if (script.textContent.length > 500000) continue;
+      try { visit(JSON.parse(script.textContent)); } catch { /* Malformed page metadata is optional. */ }
+    }
+    const absolute = value => { try { return new URL(value, location.href).href; } catch { return ''; } };
+    const sources = video ? [video.currentSrc, video.getAttribute('src')].filter(Boolean).map(absolute) : [];
+    const matched = records.filter(item => sources.includes(absolute(item.contentUrl)));
+    const soleVideo = allVideos().length === (video ? 1 : 0);
+    const record = matched.length === 1 ? matched[0] : soleVideo && records.length === 1 ? records[0] : null;
+    const scope = video?.closest('[itemscope][itemtype*="VideoObject"], [itemscope][itemtype*="Movie"]');
+    const scopedName = scope?.querySelector('[itemprop="name"]');
+    let title = text(video?.getAttribute('title')) || text(scopedName?.content || scopedName?.textContent) || text(record?.name);
+    let actors = names(record?.actor || record?.actors);
+    if (scope) actors = names([...scope.querySelectorAll('[itemprop="actor"], [itemprop="actors"]')].map(el => {
+      const name = el.querySelector('[itemprop="name"]'); return name?.content || name?.textContent || el.content || el.textContent;
+    })).concat(actors);
+    // Page-level Open Graph is safe only for a single-video detail page.
+    if (soleVideo && /^video[.:]/i.test(meta('og:type'))) {
+      title ||= meta('og:title');
+      actors.push(...names([...document.querySelectorAll('meta[property="video:actor"]')].map(el => el.content)));
+      for (const label of document.querySelectorAll('dt, strong, b, .label')) {
+        if (!/^(演员|演員|出演|主演|cast|actors?|actresses?|models?)\s*[:：]?$/i.test(text(label.textContent))) continue;
+        if (label.closest('aside, nav, footer')) continue;
+        const field = label.tagName === 'DT' ? label.nextElementSibling : label.parentElement;
+        if (!field || field.textContent.length > 1200) continue;
+        const links = [...field.querySelectorAll('a')];
+        actors.push(...names(links.map(el => el.textContent)));
+      }
+    }
+    return { title, actors: [...new Set(actors)].slice(0, 12) };
+  }
   function inventory() {
     return allVideos().map(video => {
       if (!ids.has(video)) ids.set(video, String(++serial));
@@ -114,7 +157,7 @@
     // Flush preferences even if the viewer is closed immediately after a drag.
     if (s.settingsDirty) browser.storage.local.set({ viewerSettings: s.settings }).catch(() => {});
   }
-  async function open(id, token) {
+  async function open(id, token, pageMetadata = null) {
     if (session) close();
     const video = allVideos().find(v => ids.get(v) === id);
     if (!video?.isConnected) return { ok: false, error: '视频已经变化，请重新检测。' };
@@ -125,42 +168,54 @@
     try { stored = (await browser.storage.local.get('viewerSettings')).viewerSettings || {}; } catch { /* Defaults work without storage. */ }
     if (opening !== generation || !video.isConnected) return { ok: false, error: '观影操作已取消，请重新打开。' };
     const settings = cleanSettings(stored);
+    const info = metadata(video);
+    if (!info.title && !info.actors.length && pageMetadata) {
+      info.title = typeof pageMetadata.title === 'string' ? pageMetadata.title.slice(0, 300) : '';
+      info.actors = Array.isArray(pageMetadata.actors) ? pageMetadata.actors.filter(v => typeof v === 'string').slice(0, 12).map(v => v.slice(0, 300)) : [];
+    }
     const host = document.createElement('div');
     host.setAttribute('data-smart-video-viewer', '');
     host.style.cssText = 'all:initial!important;position:fixed!important;inset:0!important;z-index:2147483647!important;pointer-events:none!important;visibility:visible!important;font:14px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif!important;color:#f5f5f7!important;color-scheme:dark!important;';
     const root = host.attachShadow({ mode: 'open' });
     root.innerHTML = `
       <style>
-      :host { color-scheme:dark; font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#f5f5f7; }
+      :host { color-scheme:dark; font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#f5f5f7; }
       * { box-sizing:border-box; } button,input,select { font:inherit; }
       .backdrop { position:fixed;inset:0;background:rgba(0,0,0,.90);pointer-events:auto; }
-      .dock { position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:min(680px,calc(100vw - 32px));pointer-events:auto; }
-      .panel { opacity:1;transition:opacity 180ms ease-out;padding:16px 20px 12px;background:#252527;border:1px solid rgba(255,255,255,.18);border-radius:16px;pointer-events:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 8px rgba(0,0,0,.28); }
+      .dock { position:fixed;bottom:24.31px;left:50%;transform:translateX(-50%) scale(.9326655944);transform-origin:center bottom;width:min(560px,calc(100vw - 32px));pointer-events:auto; }
+      .panel { opacity:1;transition:opacity 180ms ease-out;padding:10px 14px 8px;background:#252527;border:1px solid rgba(255,255,255,.18);border-radius:12px;pointer-events:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 8px rgba(0,0,0,.28); }
       @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
         .panel { background:linear-gradient(155deg,rgba(255,255,255,.12),rgba(255,255,255,.025) 48%,rgba(255,255,255,.055)),rgba(24,24,28,.58);-webkit-backdrop-filter:blur(28px) saturate(160%);backdrop-filter:blur(28px) saturate(160%); }
       }
       @media(prefers-reduced-transparency:reduce), (prefers-contrast:more) {
         .panel { background:#252527;-webkit-backdrop-filter:none;backdrop-filter:none;border-color:#8c8c93; }
       }
+      .video-info { position:fixed;padding:14px 18px;max-height:120px;overflow:hidden;pointer-events:none;opacity:1;transition:opacity 180ms ease-out;background:linear-gradient(rgba(0,0,0,.65),transparent);text-shadow:0 1px 3px #000; }
+      .video-info[hidden], .video-info [hidden] { display:none; }
+      .video-info[data-hidden] { opacity:0; }
+      .video-title { margin:0;font-size:16px;font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere; }
+      .video-actors { margin:5px 0 0;font-size:12px;line-height:1.5;color:#e4e4e9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+      @media(prefers-reduced-motion:reduce) { .video-info { transition:none; } }
       .dock[data-hidden] .panel { opacity:0;pointer-events:none; }
       @media(prefers-reduced-motion:reduce) { .panel { transition:none; } }
-      .row { display:flex;align-items:center;gap:14px; } .main { justify-content:center; } .timeline { margin-top:12px;gap:10px; }
-      .settings { margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.16);justify-content:space-between;flex-wrap:wrap;gap:12px; }
-      button { min-width:36px;min-height:36px;padding:7px 10px;background:transparent;border:0;border-radius:8px;color:#f5f5f7;cursor:pointer;white-space:nowrap; }
+      .row { display:flex;align-items:center;gap:8px; } .main { justify-content:center; } .timeline { margin-top:6px;gap:8px; }
+      .settings { margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.16);justify-content:space-between;flex-wrap:wrap;gap:8px; }
+      button { min-width:28px;min-height:28px;padding:4px 7px;background:transparent;border:0;border-radius:8px;color:#f5f5f7;cursor:pointer;white-space:nowrap; }
       button:hover { background:#ffffff1c; } button:active { background:#ffffff30; } button:disabled { opacity:.45;cursor:default; }
       button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible { outline:2px solid #94c6ff;outline-offset:3px; }
-      .play { font-size:22px;min-width:48px; } .secondary { color:#c4c4cc;font-size:12px; }
+      .play { font-size:18px;min-width:36px; } .secondary { color:#c4c4cc;font-size:12px; }
       input { accent-color:#e9e9ed;color:#f5f5f7;min-width:0; } input[type=range] { cursor:pointer; }
-      #timeline { flex:1;width:50px; } #volume { width:70px; } #rate-range { width:110px; }
-      input[type=number] { width:64px;padding:6px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.28);border-radius:6px; }
+      #timeline { flex:1;width:50px; } #volume { width:54px; } #rate-range { width:76px; }
+      input[type=number] { width:56px;padding:4px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.28);border-radius:6px; }
       .subtitles { margin-top:6px;flex-wrap:wrap; } select { max-width:210px;min-width:100px;color:#f5f5f7;background:#252527;border:1px solid #ffffff47;border-radius:6px;padding:4px;min-height:28px; }
-      label { display:flex;align-items:center;gap:7px;color:#d8d8df;white-space:nowrap; }
+      label { display:flex;align-items:center;gap:5px;color:#d8d8df;white-space:nowrap; }
       .clock { font-size:12px;font-variant-numeric:tabular-nums;min-width:38px; }
-      .spacer { flex:1; } .status { font-size:12px;min-height:17px;margin:10px 0 0;color:#c4c4cc;text-align:center; }
-      details { font-size:12px;color:#c4c4cc;margin-top:8px; } summary { cursor:pointer; } details p { margin:8px 0 0;line-height:1.6; }
-      @media(max-width:540px) { .dock { bottom:10px; }.panel { padding:12px; }.row { gap:6px; }.main { gap:4px; }.main button { padding:6px;min-width:32px;font-size:12px; }.main .play { min-width:40px;font-size:20px; }#volume { display:none; }#rate-range { width:80px; } }
+      .spacer { flex:1; } .status { font-size:12px;min-height:15px;margin:5px 0 0;color:#c4c4cc;text-align:center; }
+      details { font-size:12px;color:#c4c4cc;margin-top:4px; } summary { cursor:pointer; } details p { margin:8px 0 0;line-height:1.6; }
+      @media(max-width:540px) { .dock { bottom:10px; }.panel { padding:8px 10px; }.row { gap:6px; }.main { gap:4px; }.main button { padding:4px;min-width:28px;font-size:12px; }.main .play { min-width:34px;font-size:18px; }#volume { display:none; }#rate-range { width:80px; } }
       @media(max-height:440px) { details,.settings { display:none; }.dock { bottom:6px; }.panel { padding:8px 12px; }.status { margin-top:4px; } }
       </style>
+      <section class="video-info" aria-label="视频信息" hidden><h2 class="video-title"></h2><p class="video-actors"></p></section>
       <div class="dock">
       <section class="panel" role="region" aria-label="视频播放控制">
         <div class="row main">
@@ -174,6 +229,13 @@
         <p id="status" class="status" role="status" aria-live="polite">← → 快退／快进 · 空格 暂停 · [ ] 调节倍速</p>
         <details><summary>快捷键与播放说明</summary><p>← / J 快退，→ / L 快进；空格 / K 播放暂停；[ / ] 调速 0.1×；R 恢复 1×；M 静音；F 全屏；Esc 退出。输入数值时不触发快捷键。极端倍速可能静音或不受浏览器支持。全屏使用 Safari 原生控制，退出全屏后继续使用这里的倍速与秒数设置。</p></details>
       </section></div>`;
+    const information = root.querySelector('.video-info');
+    information.hidden = !info.title && !info.actors.length;
+    const titleNode = root.querySelector('.video-title');
+    titleNode.textContent = info.title; titleNode.hidden = !info.title;
+    const actorsNode = root.querySelector('.video-actors');
+    actorsNode.textContent = info.actors.length ? `演员：${info.actors.join(' · ')}` : '';
+    actorsNode.hidden = !info.actors.length;
     const backdrop = document.createElement('div');
     backdrop.style.cssText = 'position:fixed!important;inset:0!important;background:rgba(0,0,0,.90)!important;z-index:2147483645!important;pointer-events:auto!important;';
     // The backdrop must sit below the original video, outside the controls' stacking context.
@@ -208,6 +270,8 @@
       panel.inert = true;
       panel.setAttribute('aria-hidden', 'true');
       dock.setAttribute('data-hidden', '');
+      information.setAttribute('data-hidden', '');
+      information.setAttribute('aria-hidden', 'true');
     }
     function scheduleHide(delay = 800) {
       clearTimeout(s.hideTimer);
@@ -217,6 +281,8 @@
       if (event.pointerType !== 'mouse' && event.pointerType !== 'pen') return;
       pointerInside = true; clearTimeout(s.hideTimer);
       dock.removeAttribute('data-hidden');
+      information.removeAttribute('data-hidden');
+      information.removeAttribute('aria-hidden');
       panel.inert = false; panel.removeAttribute('aria-hidden');
     });
     on(dock, 'pointerleave', () => { pointerInside = false; scheduleHide(); });
@@ -231,6 +297,9 @@
       const ratio = video.videoWidth > 0 && video.videoHeight > 0 ? video.videoWidth / video.videoHeight : fallbackRatio;
       const width = Math.min(innerWidth, innerHeight * ratio);
       const height = width / ratio;
+      information.style.left = `${(innerWidth - width) / 2}px`;
+      information.style.top = `${(innerHeight - height) / 2}px`;
+      information.style.width = `${width}px`;
       styles.set(video, { left: `${(innerWidth - width) / 2}px`, top: `${(innerHeight - height) / 2}px`,
         right: 'auto', bottom: 'auto', width: `${width}px`, height: `${height}px`,
         'object-position': '50% 50%', 'aspect-ratio': 'auto' });
@@ -371,7 +440,7 @@
     return { ok: true };
   }
   window.addEventListener('pagehide', () => { close(); restoreFrame(); preparedToken = null; });
-  globalThis.smartVideoViewer = { inventory, open, close, cleanSettings, deepQuery,
+  globalThis.smartVideoViewer = { inventory, open, close, cleanSettings, deepQuery, metadata,
     openVideo(video) { inventory(); return open(ids.get(video)); },
     prepare(token) { if (token !== preparedToken) { close(); restoreFrame(); } preparedToken = token; },
     active: () => Boolean(session) };

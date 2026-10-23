@@ -249,7 +249,9 @@ browser.runtime.onMessage.addListener((message, sender) => {
       if (!chosen) return { ok: false, error: found.reachable ? '未检测到视频，请先在网页播放，再重新检测。' : '无法访问网页。请允许扩展访问此网站，并刷新网页。Safari 内部页面无法使用。' };
       const token = crypto.randomUUID();
       await Promise.all(frames.map(frameId => sendToFrame(tab.id, frameId, { type: 'viewer-prepare', token })));
-      const result = await sendToFrame(tab.id, chosen.frameId, { type: 'viewer-open', id: chosen.id, token });
+      const metadata = chosen.frameId !== 0 && found.videos.length === 1
+        ? await sendToFrame(tab.id, 0, { type: 'viewer-metadata' }) : null;
+      const result = await sendToFrame(tab.id, chosen.frameId, { type: 'viewer-open', id: chosen.id, token, metadata });
       if (!result?.ok) await Promise.all(frames.map(frameId => sendToFrame(tab.id, frameId, { type: 'viewer-close' })));
       return result || { ok: false, error: '视频所在页面已变化，请刷新网页后重试。' };
     } finally { pendingTabs.delete(tab.id); }

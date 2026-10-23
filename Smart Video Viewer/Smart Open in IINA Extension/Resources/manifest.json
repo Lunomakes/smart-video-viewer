@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Smart Open in IINA",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "网页独立观影、连续倍速、可设置秒数的快进快退，并保留 IINA 打开入口。",
   "permissions": [
     "activeTab",
