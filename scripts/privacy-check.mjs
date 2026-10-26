@@ -55,7 +55,7 @@ if (args[0] === '--artifact') {
   for (const entry of entries) {
     const [oid] = entry.split(' ');
     if (execFileSync('git', ['cat-file', '-t', oid], { cwd: root, encoding: 'utf8' }).trim() === 'blob') {
-      inspect(`history blob ${oid.slice(0, 12)}`, execFileSync('git', ['cat-file', 'blob', oid], { cwd: root }));
+      inspect(`history blob ${oid.slice(0, 12)}`, execFileSync('git', ['cat-file', 'blob', oid], { cwd: root, maxBuffer: Infinity }));
     }
   }
 } else {
