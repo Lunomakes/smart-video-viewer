@@ -3,13 +3,13 @@
 依据现有源码与本地版本记录整理。这里的历史版本号不代表存在对应 Git 标签或 GitHub Release。
 Compiled from source and local version records. Historical version numbers do not imply Git tags or GitHub Releases exist.
 
-## Unreleased
+## 2.0.7 — 2026-10-26
 
+- 从扩展弹窗进入独立观影后，Safari 不会把键盘焦点交还网页：现在会提示点按画面，第一次点击只取回焦点，不暂停也不退出；网页中被遮住的输入框不再吞掉方向键。 / Safari does not return keyboard focus to the page after the extension popover closes: the viewer now asks for a click on the picture, and the first click only restores focus without pausing or exiting. Hidden page fields behind the viewer no longer swallow arrow keys.
 - 配套 App 改为原生 SwiftUI 界面，macOS 26 起使用 Liquid Glass 按钮与状态面板，回到 App 时自动刷新扩展启用状态；扩展弹窗改用透明背景与系统颜色，显示 Safari 原生弹窗材质。 / Rebuild the companion app in native SwiftUI with Liquid Glass button and status surface on macOS 26+, refreshing extension state on activation; the popup now uses a transparent background and system colors to show Safari's native popover material.
 - 按实际画面边界接管视频外的交互区域，让网页撑大的视频内部黑边显示普通箭头，保留原视频和字幕绘制。 / Use the picture bounds to handle interactions outside the video, giving site-expanded letterboxing the default cursor while preserving native video and caption rendering.
 - 增加 Apple Icon Composer 原生分层应用图标，支持浅色与深色外观。 / Add a native layered app icon authored for Apple Icon Composer, with light and dark appearances.
-
-- 2.0.7：更新扩展版本和构建号；检测请求增加超时，帧列表查询超时回退到主页面，避免弹窗一直停在检测中。 / Update extension and build versions; bound detection requests and fall back to the main frame if frame enumeration times out.
+- 检测请求增加超时，帧列表查询超时回退到主页面；弹窗直接检测网页，不再等待后台唤醒，避免一直停在检测中。 / Bound detection requests and fall back to the main frame if frame enumeration times out; the popup queries pages directly instead of waiting on the background worker, so detection no longer gets stuck.
 
 - 增加标准字幕轨道选择、关闭与本地 SRT / VTT 导入；退出时恢复网页设置。 / Add standard subtitle selection, off control and local SRT / VTT import; restore site settings on exit.
 - 将媒体采集、暂停与 iframe 定位扩展到开放 Shadow DOM。 / Extend media collection, pausing and iframe lookup to open Shadow DOM.
