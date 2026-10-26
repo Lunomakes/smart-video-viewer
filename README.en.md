@@ -30,7 +30,7 @@ These changes are not included in the existing v2.0.6 downloads below. Standard 
 
 ## Get and build
 
-A [v2.0.6 preview DMG / ZIP](https://github.com/Dashmett/smart-video-viewer/releases/tag/v2.0.6) is available for **Apple Silicon only**. It is ad-hoc signed and unnotarized, requires Safari development-testing setup, and is not guaranteed to run immediately after download. See the [installation guide](docs/INSTALL.md). No Developer ID distribution build or App Store version is available.
+A [v2.0.6 preview DMG / ZIP](https://github.com/Lunomakes/smart-video-viewer/releases/tag/v2.0.6) is available for **Apple Silicon only**. It is ad-hoc signed and unnotarized, requires Safari development-testing setup, and is not guaranteed to run immediately after download. See the [installation guide](docs/INSTALL.md). No Developer ID distribution build or App Store version is available.
 
 Alternatively, build from source:
 
@@ -39,7 +39,7 @@ You need macOS, Safari and Xcode. The deployment target is macOS 12.0, not a ful
 1. Clone and open the project:
 
    ```sh
-   git clone https://github.com/Dashmett/smart-video-viewer.git
+   git clone https://github.com/Lunomakes/smart-video-viewer.git
    cd smart-video-viewer
    open "Smart Video Viewer/Smart Open in IINA.xcodeproj"
    ```

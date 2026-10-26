@@ -30,7 +30,7 @@
 
 ## 获取与构建
 
-现提供 [v2.0.6 测试版 DMG / ZIP](https://github.com/Dashmett/smart-video-viewer/releases/tag/v2.0.6)，仅支持 **Apple Silicon**。这是临时签名、未公证的开发测试包，需要 Safari 开发测试配置，不能保证下载即用；详见[安装说明](docs/INSTALL.md)。尚无 Developer ID 正式发行包或 App Store 版本。
+现提供 [v2.0.6 测试版 DMG / ZIP](https://github.com/Lunomakes/smart-video-viewer/releases/tag/v2.0.6)，仅支持 **Apple Silicon**。这是临时签名、未公证的开发测试包，需要 Safari 开发测试配置，不能保证下载即用；详见[安装说明](docs/INSTALL.md)。尚无 Developer ID 正式发行包或 App Store 版本。
 
 也可以按以下步骤从源码构建：
 
@@ -39,7 +39,7 @@
 1. 克隆仓库：
 
    ```sh
-   git clone https://github.com/Dashmett/smart-video-viewer.git
+   git clone https://github.com/Lunomakes/smart-video-viewer.git
    cd smart-video-viewer
    open "Smart Video Viewer/Smart Open in IINA.xcodeproj"
    ```

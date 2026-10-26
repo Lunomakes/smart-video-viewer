@@ -38,8 +38,8 @@ The existing `tests/*-checks.js` files are browser-driver functions requiring sp
 
 ## GitHub Actions CI
 
-配置位于 [checks.yml](../.github/workflows/checks.yml)，推送 main 或创建/更新 PR 时自动运行。也可以进入 [Actions](https://github.com/Dashmett/smart-video-viewer/actions) → Checks → Run workflow 手动运行。点击运行记录查看步骤日志；绿色表示通过，红色表示失败。
-The configuration is in [checks.yml](../.github/workflows/checks.yml). It runs on pushes to main and pull requests. To run it manually, open [Actions](https://github.com/Dashmett/smart-video-viewer/actions) → Checks → Run workflow. Open a run for step logs; green means success and red means failure.
+配置位于 [checks.yml](../.github/workflows/checks.yml)，推送 main 或创建/更新 PR 时自动运行。也可以进入 [Actions](https://github.com/Lunomakes/smart-video-viewer/actions) → Checks → Run workflow 手动运行。点击运行记录查看步骤日志；绿色表示通过，红色表示失败。
+The configuration is in [checks.yml](../.github/workflows/checks.yml). It runs on pushes to main and pull requests. To run it manually, open [Actions](https://github.com/Lunomakes/smart-video-viewer/actions) → Checks → Run workflow. Open a run for step logs; green means success and red means failure.
 
 CI 使用临时 Ubuntu 环境和 Node.js 22，仅需要仓库内容读取权限，不需要 Apple 签名证书或项目 Secrets。它执行静态检查和后台回归，不构建 macOS App，也不验证真实 Safari 播放或图标视觉效果。
 CI uses an ephemeral Ubuntu runner and Node.js 22 with read-only repository permissions. No Apple signing certificates or project secrets are needed. It checks source/assets and background regressions, not macOS builds, actual Safari playback or visual icon quality.

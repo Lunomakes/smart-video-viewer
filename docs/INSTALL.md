@@ -1,6 +1,6 @@
 # 安装测试版 / Install the preview
 
-[下载 v2.0.6 测试版 / Download v2.0.6 preview](https://github.com/Dashmett/smart-video-viewer/releases/tag/v2.0.6)
+[下载 v2.0.6 测试版 / Download v2.0.6 preview](https://github.com/Lunomakes/smart-video-viewer/releases/tag/v2.0.6)
 
 ## 中文
 
