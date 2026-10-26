@@ -34,5 +34,24 @@ async (page) => {
   check('open Shadow DOM video detected and elevated',await page.evaluate(()=>shadowVideo.style.position==='fixed'&&smartVideoViewer.active()));
   await page.keyboard.press('Escape');
   check('Shadow DOM video restores controls and layout',await page.evaluate(()=>shadowVideo.style.position===''&&shadowVideo.controls&&shadowVideo.getRootNode().host.id==='shadow-player'));
+  await page.evaluate(async()=>{
+    const v=document.querySelector('video');v.currentTime=10;
+    const field=document.createElement('input');field.id='page-field';document.body.prepend(field);
+    await smartVideoViewer.open(smartVideoViewer.inventory()[0].id,'focus-test');field.focus();
+  });
+  await page.keyboard.press('ArrowRight');
+  check('arrows seek while a hidden page field holds focus',await page.evaluate(()=>document.querySelector('video').currentTime>=14.9&&document.querySelector('#page-field').value===''));
+  await page.keyboard.press('Escape');
+  // Safari popover entry: the page has no keyboard focus until the first click.
+  await page.evaluate(async()=>{document.hasFocus=()=>false;await smartVideoViewer.open(smartVideoViewer.inventory()[0].id,'popover-test');});
+  const hint=()=>page.evaluate(()=>!document.querySelector('[data-smart-video-viewer]').shadowRoot.querySelector('.focus-hint').hidden);
+  check('focus hint shown when page lacks keyboard focus',await hint());
+  await page.screenshot({path:`output/playwright/focus-hint-${page.context().browser().browserType().name()}.png`});
+  const box=await page.evaluate(()=>{const r=document.querySelector('video').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};});
+  await page.mouse.click(box.x+box.width/2,box.y+box.height/2);
+  check('first click only restores focus',await page.evaluate(()=>smartVideoViewer.active()&&document.querySelector('video').paused)&&!await hint());
+  await page.mouse.click(box.x+box.width/2,box.y+box.height/2);
+  check('second click toggles playback',await page.evaluate(()=>!document.querySelector('video').paused));
+  await page.keyboard.press('Escape');
   return {passed:results.length,results};
 }

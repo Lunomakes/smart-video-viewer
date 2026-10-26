@@ -194,6 +194,8 @@
       }
       .video-info { position:fixed;padding:14px 18px;max-height:120px;overflow:hidden;pointer-events:none;opacity:1;transition:opacity 180ms ease-out;background:linear-gradient(rgba(0,0,0,.65),transparent);text-shadow:0 1px 3px #000; }
       .video-info[hidden], .video-info [hidden] { display:none; }
+      .focus-hint { position:fixed;top:24px;left:50%;transform:translateX(-50%);margin:0;padding:8px 14px;border-radius:10px;background:rgba(24,24,28,.78);border:1px solid rgba(255,255,255,.18);font-size:13px;pointer-events:none;white-space:nowrap; }
+      .focus-hint[hidden] { display:none; }
       .video-info[data-hidden] { opacity:0; }
       .video-title { margin:0;font-size:16px;font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere; }
       .video-actors { margin:5px 0 0;font-size:12px;line-height:1.5;color:#e4e4e9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
@@ -219,6 +221,7 @@
       </style>
       <svg class="cursor-shield" aria-hidden="true" focusable="false"><path/></svg>
       <section class="video-info" aria-label="视频信息" hidden><h2 class="video-title"></h2><p class="video-actors"></p></section>
+      <p class="focus-hint" role="status" hidden>点按画面以使用键盘快捷键</p>
       <div class="dock">
       <section class="panel" role="region" aria-label="视频播放控制">
         <div class="row main">
@@ -376,15 +379,24 @@
     // so decide by picture bounds rather than requiring the backdrop to be the target.
     const nativePresentation = () => document.fullscreenElement || video.webkitDisplayingFullscreen ||
       document.pictureInPictureElement === video || video.webkitPresentationMode === 'picture-in-picture';
+    // Safari keeps keyboard focus off the page after the extension popover closes,
+    // so the first click only hands focus back instead of toggling or exiting.
+    const focusHint = root.querySelector('.focus-hint');
+    let awaitingFocus = !document.hasFocus();
+    focusHint.hidden = !awaitingFocus;
+    const focusReady = () => { awaitingFocus = false; focusHint.hidden = true; };
+    on(window, 'focus', () => { focusHint.hidden = true; });
     for (const type of ['pointerdown', 'mousedown', 'touchstart']) on(window, type, event => {
       entryRecovery = false;
       if (!nativePresentation() && !event.composedPath().includes(panel)) event.stopImmediatePropagation();
     }, { capture: true });
-    on(window, 'keydown', () => { entryRecovery = false; }, { capture: true });
+    on(window, 'keydown', () => { entryRecovery = false; focusReady(); }, { capture: true });
     on(window, 'click', event => {
       if (nativePresentation()) return;
       const path = event.composedPath();
+      const firstClick = awaitingFocus; focusReady();
       if (path.includes(panel)) return;
+      if (firstClick) { event.preventDefault(); event.stopImmediatePropagation(); return; }
       const rect = video.getBoundingClientRect();
       // X can resize the element after layout(). Its box then includes letterboxing;
       // hit-test the contained picture, not that potentially viewport-sized box.
@@ -421,7 +433,9 @@
     });
     on(window, 'keydown', e => {
       if (e.isComposing || e.metaKey || e.ctrlKey || e.altKey || document.fullscreenElement || video.webkitDisplayingFullscreen) return;
-      const path = e.composedPath();
+      // Page fields sit hidden behind the viewer; only the viewer's own fields keep their keys.
+      if (!e.composedPath().includes(host)) host.focus({ preventScroll: true });
+      const path = e.composedPath().filter(el => el instanceof Node && root.contains(el));
       if (path.some(el => el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)))) return;
       if (e.key === 'Tab') {
         if (panel.inert) { e.preventDefault(); return; }
