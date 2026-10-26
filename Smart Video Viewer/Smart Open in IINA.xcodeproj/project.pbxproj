@@ -21,10 +21,6 @@
 		A1000000000000000000000B /* toolbar-light-32.png in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* toolbar-light-32.png */; };
 		A1000000000000000000000C /* toolbar-light-38.png in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* toolbar-light-38.png */; };
 		E2E530BD3003CA1D000F6095 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E530BC3003CA1D000F6095 /* AppDelegate.swift */; };
-		E2E530C13003CA1D000F6095 /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = E2E530BF3003CA1D000F6095 /* Main.html */; };
-		E2E530C33003CA1D000F6095 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = E2E530C23003CA1D000F6095 /* Icon.png */; };
-		E2E530C53003CA1D000F6095 /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = E2E530C43003CA1D000F6095 /* Style.css */; };
-		E2E530C73003CA1D000F6095 /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = E2E530C63003CA1D000F6095 /* Script.js */; };
 		E2E530C93003CA1D000F6095 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E530C83003CA1D000F6095 /* ViewController.swift */; };
 		E2E530CC3003CA1D000F6095 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E2E530CA3003CA1D000F6095 /* Main.storyboard */; };
 		E2E530CE3003CA1E000F6095 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2E530CD3003CA1E000F6095 /* Assets.xcassets */; };
@@ -83,10 +79,6 @@
 		A2000000000000000000000C /* toolbar-light-38.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "toolbar-light-38.png"; path = "Resources/toolbar-light-38.png"; sourceTree = "<group>"; };
 		E2E530B93003CA1D000F6095 /* Smart Open in IINA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Smart Open in IINA.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2E530BC3003CA1D000F6095 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		E2E530C03003CA1D000F6095 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = Base.lproj/Main.html; sourceTree = "<group>"; };
-		E2E530C23003CA1D000F6095 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
-		E2E530C43003CA1D000F6095 /* Style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = Style.css; sourceTree = "<group>"; };
-		E2E530C63003CA1D000F6095 /* Script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Script.js; sourceTree = "<group>"; };
 		E2E530C83003CA1D000F6095 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		E2E530CB3003CA1D000F6095 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		E2E530CD3003CA1E000F6095 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -152,20 +144,8 @@
 				E2E530CD3003CA1E000F6095 /* Assets.xcassets */,
 				C20000000000000000000001 /* FocusGlass.icon */,
 				E2E530CF3003CA1E000F6095 /* Info.plist */,
-				E2E530BE3003CA1D000F6095 /* Resources */,
 			);
 			path = "Smart Open in IINA";
-			sourceTree = "<group>";
-		};
-		E2E530BE3003CA1D000F6095 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				E2E530BF3003CA1D000F6095 /* Main.html */,
-				E2E530C23003CA1D000F6095 /* Icon.png */,
-				E2E530C43003CA1D000F6095 /* Style.css */,
-				E2E530C63003CA1D000F6095 /* Script.js */,
-			);
-			path = Resources;
 			sourceTree = "<group>";
 		};
 		E2E530D83003CA1E000F6095 /* Smart Open in IINA Extension */ = {
@@ -295,13 +275,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2E530C33003CA1D000F6095 /* Icon.png in Resources */,
 				E2E530CC3003CA1D000F6095 /* Main.storyboard in Resources */,
-				E2E530C73003CA1D000F6095 /* Script.js in Resources */,
-				E2E530C13003CA1D000F6095 /* Main.html in Resources */,
 				E2E530CE3003CA1E000F6095 /* Assets.xcassets in Resources */,
 				C10000000000000000000001 /* FocusGlass.icon in Resources */,
-				E2E530C53003CA1D000F6095 /* Style.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -366,14 +342,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		E2E530BF3003CA1D000F6095 /* Main.html */ = {
-			isa = PBXVariantGroup;
-			children = (
-				E2E530C03003CA1D000F6095 /* Base */,
-			);
-			name = Main.html;
-			sourceTree = "<group>";
-		};
 		E2E530CA3003CA1D000F6095 /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (

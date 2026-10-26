@@ -5,6 +5,7 @@ Compiled from source and local version records. Historical version numbers do no
 
 ## Unreleased
 
+- 配套 App 改为原生 SwiftUI 界面，macOS 26 起使用 Liquid Glass 按钮与状态面板，回到 App 时自动刷新扩展启用状态；扩展弹窗改用透明背景与系统颜色，显示 Safari 原生弹窗材质。 / Rebuild the companion app in native SwiftUI with Liquid Glass button and status surface on macOS 26+, refreshing extension state on activation; the popup now uses a transparent background and system colors to show Safari's native popover material.
 - 按实际画面边界接管视频外的交互区域，让网页撑大的视频内部黑边显示普通箭头，保留原视频和字幕绘制。 / Use the picture bounds to handle interactions outside the video, giving site-expanded letterboxing the default cursor while preserving native video and caption rendering.
 - 增加 Apple Icon Composer 原生分层应用图标，支持浅色与深色外观。 / Add a native layered app icon authored for Apple Icon Composer, with light and dark appearances.
 
