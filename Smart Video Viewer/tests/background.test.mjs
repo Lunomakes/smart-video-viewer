@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
-const source = readFileSync(new URL('../Smart Open in IINA Extension/Resources/background.js', import.meta.url), 'utf8');
+const resource = name => readFileSync(new URL(`../Smart Open in IINA Extension/Resources/${name}`, import.meta.url), 'utf8');
+const source = resource('tab-actions.js') + '\n' + resource('background.js').replace("importScripts('tab-actions.js');", '');
 function fixture() {
   const events = {}, calls = [], saved = { viewerSettings: { rate: 1.5 }, 'last-stream-v2-9': { streamUrl: 'https://example.test/legacy' }, unrelated: true };
   const event = key => ({ addListener: fn => events[key] = fn });
@@ -23,7 +24,7 @@ function fixture() {
     webNavigation: { getAllFrames: async () => [{ frameId:0 },{frameId:2}] }
   };
   const ctx = vm.createContext({browser,URL,Map,Set,Date,Promise,setTimeout,clearTimeout,crypto:webcrypto});
-  vm.runInContext(source + '\nglobalThis.api = {cacheStream,cachedStream,scoreCandidate,normalizeUrl,frameIdsForTab,mediaByTab};', ctx);
+  vm.runInContext(source + '\nglobalThis.api = {cacheStream,cachedStream,scoreCandidate,normalizeUrl,frameIdsForTab,mediaByTab,discoverVideos,openViewer,activeTab};', ctx);
   return {api:ctx.api,events,calls,saved,browser,tab};
 }
 test('cache uses memory only and respects page identity', () => {
@@ -57,7 +58,7 @@ test('extensionless current media is accepted and page pauses after launch', asy
   assert.ok(nativeIndex>=0&&pauseIndex>nativeIndex); assert.equal(f.calls[nativeIndex][1].url,'https://example.test/video');
 });
 test('viewer selection targets requested iframe after preparing all frames', async () => {
-  const f=fixture(); const result=await f.events.message({type:'open-viewer',video:{id:'v',frameId:2}},{});
+  const f=fixture(); const result=await f.api.openViewer(9,{id:'v',frameId:2});
   assert.equal(result.ok,true);
   assert.equal(f.calls.filter(c=>c[0]==='frame'&&c[2].type==='viewer-prepare').length,2);
   assert.equal(f.calls.find(c=>c[0]==='frame'&&c[2].type==='viewer-open')[1],2);
@@ -68,18 +69,18 @@ test('content scripts cannot request external launch', async () => {
 });
 test('no accessible frame gives an actionable permission error', async () => {
   const f=fixture(); f.browser.tabs.sendMessage=async()=>{throw Error('no permission');};
-  const result=await f.events.message({type:'open-viewer'},{});
+  const result=await f.api.openViewer(9);
   assert.equal(result.ok,false); assert.match(result.error,/允许扩展访问/);
 });
 test('frame enumeration timeout falls back to main frame instead of hanging discovery', async () => {
   const f=fixture(); f.browser.webNavigation.getAllFrames=()=>new Promise(()=>{});
-  const result=await f.events.message({type:'discover-videos'},{});
+  const result=await f.api.discoverVideos(9);
   assert.equal(result.ok,true); assert.equal(result.videos.length,1);
   assert.equal(result.videos[0].frameId,0);
 });
 test('active tab lookup timeout returns an error instead of hanging the popup', async () => {
   const f=fixture(); f.browser.tabs.query=()=>new Promise(()=>{});
-  const result=await f.events.message({type:'discover-videos'},{});
+  const result=await f.events.message({type:'open-in-iina'},{});
   assert.equal(result.ok,false); assert.match(result.error,/操作未完成/);
 });
 
@@ -91,7 +92,7 @@ test('sole iframe video receives explicit top page metadata', async () => {
     if (message.type === 'viewer-metadata') return {title:'Example title', actors:['Example actor']};
     return send(id, message, options);
   };
-  const result = await f.events.message({type:'open-viewer'}, {});
+  const result = await f.api.openViewer(9);
   assert.equal(result.ok, true);
   const opened = f.calls.find(c => c[0] === 'frame' && c[2].type === 'viewer-open');
   assert.equal(opened[2].metadata.title, 'Example title');

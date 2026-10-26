@@ -1,3 +1,4 @@
+importScripts('tab-actions.js');
 const mediaByTab = new Map();
 const lastStreamByTab = new Map();
 const MAX_CANDIDATES = 100;
@@ -99,38 +100,6 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === "loading" || changeInfo.url) { mediaByTab.delete(tabId); lastStreamByTab.delete(tabId); }
 });
 
-async function bounded(promise, milliseconds = 2000) {
-  let timer;
-  try {
-    return await Promise.race([promise, new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error('Browser request timed out')), milliseconds);
-    })]);
-  } finally { clearTimeout(timer); }
-}
-
-async function frameIdsForTab(tabId) {
-  try {
-    const frames = await bounded(browser.webNavigation.getAllFrames({ tabId }));
-    return [...new Set([0, ...frames.map((frame) => frame.frameId)])];
-  } catch {
-    return [0];
-  }
-}
-
-async function sendToFrame(tabId, frameId, message) {
-  try {
-    let timer;
-    try {
-      return await Promise.race([
-        browser.tabs.sendMessage(tabId, message, { frameId }),
-        new Promise(resolve => { timer = setTimeout(() => resolve(null), 2000); })
-      ]);
-    } finally { clearTimeout(timer); }
-  } catch {
-    return null;
-  }
-}
-
 async function collectFromPage(tabId, fallbackPageUrl) {
   const frameIds = await frameIdsForTab(tabId);
   const responses = await Promise.all(
@@ -210,50 +179,17 @@ async function openInIINA(tab) {
   return { ok: true, message: '已请求 IINA 打开；需要登录授权的视频仍可能无法在外部播放。' };
 }
 
-async function discoverVideos(tabId) {
-  const frames = await frameIdsForTab(tabId);
-  const responses = await Promise.all(frames.map(async frameId => {
-    const response = await sendToFrame(tabId, frameId, { type: 'viewer-inventory' });
-    return { frameId, response };
-  }));
-  return {
-    ok: true,
-    reachable: responses.some(item => item.response),
-    active: responses.some(item => item.response?.active),
-    videos: responses.flatMap(({ frameId, response }) => (response?.videos || []).map(video => ({ ...video, frameId })))
-      .sort((a, b) => b.score - a.score)
-  };
-}
-
 const pendingTabs = new Set();
 browser.runtime.onMessage.addListener((message, sender) => {
-  const types = ['discover-videos', 'open-viewer', 'close-viewer', 'open-in-iina'];
-  if (!types.includes(message?.type)) return undefined;
+  if (!['close-viewer', 'open-in-iina'].includes(message?.type)) return undefined;
   return (async () => {
     // Content scripts may request cleanup only. Opening IINA is a popup action.
     if (sender.tab && message.type !== 'close-viewer') return { ok: false, error: '请从扩展菜单操作。' };
-    const tab = sender.tab || (await bounded(browser.tabs.query({ active: true, currentWindow: true })))[0];
+    const tab = sender.tab || await activeTab();
     if (tab?.id === undefined) return { ok: false, error: '无法取得当前标签页。' };
-    if (message.type === 'discover-videos') return discoverVideos(tab.id);
+    if (message.type === 'close-viewer') return closeViewer(tab.id);
     if (pendingTabs.has(tab.id)) return { ok: false, error: '上一次操作尚未完成，请稍后重试。' };
     pendingTabs.add(tab.id);
-    try {
-      if (message.type === 'open-in-iina') return await openInIINA(tab);
-      const frames = await frameIdsForTab(tab.id);
-      if (message.type === 'close-viewer') {
-        await Promise.all(frames.map(frameId => sendToFrame(tab.id, frameId, { type: 'viewer-close' })));
-        return { ok: true };
-      }
-      const found = await discoverVideos(tab.id);
-      const chosen = message.video ? found.videos.find(v => v.id === message.video.id && v.frameId === message.video.frameId) : found.videos[0];
-      if (!chosen) return { ok: false, error: found.reachable ? '未检测到视频，请先在网页播放，再重新检测。' : '无法访问网页。请允许扩展访问此网站，并刷新网页。Safari 内部页面无法使用。' };
-      const token = crypto.randomUUID();
-      await Promise.all(frames.map(frameId => sendToFrame(tab.id, frameId, { type: 'viewer-prepare', token })));
-      const metadata = chosen.frameId !== 0 && found.videos.length === 1
-        ? await sendToFrame(tab.id, 0, { type: 'viewer-metadata' }) : null;
-      const result = await sendToFrame(tab.id, chosen.frameId, { type: 'viewer-open', id: chosen.id, token, metadata });
-      if (!result?.ok) await Promise.all(frames.map(frameId => sendToFrame(tab.id, frameId, { type: 'viewer-close' })));
-      return result || { ok: false, error: '视频所在页面已变化，请刷新网页后重试。' };
-    } finally { pendingTabs.delete(tab.id); }
+    try { return await openInIINA(tab); } finally { pendingTabs.delete(tab.id); }
   })().catch(() => ({ ok: false, error: '操作未完成。请检查网站访问权限、刷新网页，然后重试。' }));
 });
